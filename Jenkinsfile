@@ -20,6 +20,7 @@ pipeline {
         '''
       }
     }
+
     stage('Test'){
       agent {
         docker {
@@ -30,10 +31,16 @@ pipeline {
       steps {
         sh '''
           echo "Test stage"
-          test index.html
+          test buildindex.html
           npm test
         '''
       }
+    }
+  }
+
+  post {
+    always {
+      junit 'test-results.xml/junit.xml'
     }
   }
 }
