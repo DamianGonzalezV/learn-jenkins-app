@@ -59,7 +59,7 @@ pipeline {
   post {
     always {
       junit 'jest-results/junit.xml'
-      junit 'playwright-results/junit.xml'
+      junit 'test-results-e2e/playwright-junit-results.xml'
     }
   }
 }
