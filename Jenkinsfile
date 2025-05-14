@@ -20,47 +20,49 @@ pipeline {
     //     '''
     //   }
     // }
-  
-    stage('Test'){
-      agent {
-        docker {
-          image 'node:18-alpine'
-          reuseNode true
+    stage('Run tests'){
+      parallel {
+        // everything in this block will run in parallel 
+        stage('Unit tests'){
+          agent {
+            docker {
+              image 'node:18-alpine'
+              reuseNode true
+            }
+          }
+          steps {
+            sh '''
+              echo "Test stage"
+              test buildindex.html
+              npm test
+            '''
+          }
         }
-      }
-      steps {
-        sh '''
-          echo "Test stage"
-          test buildindex.html
-          npm test
-        '''
+        stage('E2E Tests'){
+          agent {
+            docker {
+              image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+              reuseNode true
+              // args '-u root:root'
+            }
+          }
+          steps {
+            sh '''
+              npm install serve
+              node_modules/.bin/serve -s build &
+              sleep 8
+              npx playwright test --reporter=html
+            '''
+          }
+        }
       }
     }
 
-    stage('E2E Tests'){
-      agent {
-        docker {
-          image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
-          reuseNode true
-          // args '-u root:root'
-        }
-      }
-      steps {
-        sh '''
-          npm install serve
-          node_modules/.bin/serve -s build &
-          sleep 8
-          npx playwright test --reporter=html
-        '''
-      }
-    }
-  }
-
-  post {
-    always {
+    post {
+      always {
       junit 'jest-results/junit.xml'
       junit 'test-results-e2e/playwright-junit-results.xml'
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+      }
     }
-  }
 }
