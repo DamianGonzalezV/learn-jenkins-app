@@ -20,7 +20,7 @@ pipeline {
         '''
       }
     }
-    stage('Run tests'){
+    stage('Tests'){
       parallel {
         // everything in this block will run in parallel 
         stage('Unit tests'){
@@ -36,7 +36,13 @@ pipeline {
               npm test
             '''
           }
+          post {
+            always {
+              junit 'jest-results/junit.xml'
+            }
+          }
         }
+
         stage('E2E Tests'){
           agent {
             docker {
@@ -53,15 +59,13 @@ pipeline {
               npx playwright test --reporter=html
             '''
           }
+          post {
+            always {
+              junit 'test-results-e2e/playwright-junit-results.xml'
+              publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+            }
+          }
         }
-      }
-    }
-
-    post {
-      always {
-      junit 'jest-results/junit.xml'
-      junit 'test-results-e2e/playwright-junit-results.xml'
-      publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
       }
     }
   }
