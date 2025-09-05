@@ -69,7 +69,7 @@ pipeline {
           post {
             always {
               junit 'test-results-e2e/playwright-junit-results.xml'
-              publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+              publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright Local E2E Report', reportTitles: '', useWrapperFileDirectly: true])
             }
           }
         }
@@ -93,5 +93,30 @@ pipeline {
         '''
       }
     }
+
+    stage('Prod E2E Tests'){
+          agent {
+            docker {
+              image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+              reuseNode true
+            }
+          }
+          
+          environment {
+            CI_ENVIRONMENT_URL = 'https://strong-gaufre-6679f9.netlify.app'
+          }
+
+          steps {
+            sh '''
+              npx playwright test --reporter=html
+            '''
+          }
+          post {
+            always {
+              junit 'test-results-e2e/playwright-junit-results.xml'
+              publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright Prod E2E Report', reportTitles: '', useWrapperFileDirectly: true])
+            }
+          }
+        }
   }
 }
